@@ -1,15 +1,23 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using Business.Abstratc;
 using Business.Concrete;
 using Business.DependencyResolvers.Autofac;
-using DataAccess.Abstratc;
+using Core.DependencyResolvers;
+using Core.Extensions;
+using Core.Utilities.IoC;
+using Core.Utilities.Security.Encryption;
+using Core.Utilities.Security.JWT;
 using DataAccess.Concrete.EntityFramework;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Identity.Client;
+using Microsoft.IdentityModel.Tokens;
 
-namespace WebApi
+namespace WebAPI
 {
     public class Program
     {
+
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -18,22 +26,34 @@ namespace WebApi
             {
                 builder.RegisterModule(new AutofacBusinessModule());
             });
+
+            var tokenOptions = builder.Configuration.GetSection("TokenOptions").Get<TokenOptions>();
+
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                            .AddJwtBearer(opt =>
+                            {
+                                opt.TokenValidationParameters = new TokenValidationParameters()
+                                {
+                                    ValidateIssuer = true,
+                                    ValidateAudience = true,
+                                    ValidateLifetime = true,
+                                    ValidIssuer = tokenOptions.Issuer,
+                                    ValidAudience = tokenOptions.Audience,
+                                    ValidateIssuerSigningKey = true,
+                                    IssuerSigningKey = SecurityKeyHelper.CreateSecurityKey(tokenOptions.SecurityKey)
+                                };
+                            });
+            builder.Services.AddDependencyResolvers(new ICoreModule[]
+            {
+                new CoreModule()
+            });
+
+
             // Add services to the container.
 
             builder.Services.AddControllers();
-            //builder.Services.AddSingleton<ICarService,CarManager>();
-            //builder.Services.AddSingleton<ICarDal,EfCarDal>();
-            //builder.Services.AddSingleton<IBrandService,BrandManager>();
-            //builder.Services.AddSingleton<IBrandDal,EfBrandDal>();
-            //builder.Services.AddSingleton<IColorService, ColorManager>();
-            //builder.Services.AddSingleton<IColorDal, EfColorDal>();
-            //builder.Services.AddSingleton<ICustomerService, CustomerManager>();
-            //builder.Services.AddSingleton<ICustomerDal, EfCustomerDal>();
-            //builder.Services.AddSingleton<IRentalService, RentalManager>();
-            //builder.Services.AddSingleton<IRentalDal,EfRentalDal>();
-            //builder.Services.AddSingleton<IUserService, UserManager>();
-            //builder.Services.AddSingleton<IUserDal, EfUserDal>();
-
+            //builder.Services.AddSingleton<IProductService, ProductManager>();
+            //builder.Services.AddSingleton<IProductDal, EfProductDal>();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -49,8 +69,9 @@ namespace WebApi
 
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
+            app.UseAuthentication();
 
+            app.UseAuthorization();
 
             app.MapControllers();
 

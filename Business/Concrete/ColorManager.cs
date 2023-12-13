@@ -1,4 +1,5 @@
 ﻿using Business.Abstratc;
+using Core.Aspects.Autofac.Caching;
 using Core.Utilities.Results;
 using DataAccess.Abstratc;
 using Entities.Concrete;
@@ -33,10 +34,14 @@ namespace Business.Concrete
 
         }
 
+        [CacheAspect]
+
         public IDataResult<List<Color>> GetAll()
         {
             return new SuccessDataResult<List<Color>>(_colorDal.GetAll());
         }
+
+        [CacheAspect]
 
         public IDataResult<List<Color>> GetById(int colorId)
         {

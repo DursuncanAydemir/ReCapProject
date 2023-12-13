@@ -1,4 +1,5 @@
 ﻿using Business.Abstratc;
+using Core.Aspects.Autofac.Caching;
 using Core.Utilities.Results;
 using DataAccess.Abstratc;
 using Entities.Concrete;
@@ -32,10 +33,14 @@ namespace Business.Concrete
             return new SuccessResult();
         }
 
+        [CacheAspect]
+
         public IDataResult<List<Customer>> GetAll()
         {
            return new SuccessDataResult<List<Customer>>(_customerDal.GetAll());
         }
+
+        [CacheAspect]
 
         public IDataResult<List<Customer>> GetById(int customerId)
         {

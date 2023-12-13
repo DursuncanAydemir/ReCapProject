@@ -1,5 +1,6 @@
 ﻿using Business.Abstratc;
 using Business.Constants;
+using Core.Aspects.Autofac.Caching;
 using Core.Utilities.Results;
 using DataAccess.Abstratc;
 using DataAccess.Concrete.EntityFramework;
@@ -36,10 +37,14 @@ namespace Business.Concrete
             return new SuccessResult();
         }
 
+        [CacheAspect]
+
         public IDataResult<List<Rental>> GetAll()
         {
            return new SuccessDataResult<List<Rental>>(_rentalDal.GetAll());
         }
+
+        [CacheAspect]
 
         public IDataResult<Rental> GetById(int rentalId)
         {
